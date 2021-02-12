@@ -3,41 +3,92 @@ import scipy.fft
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 import cv2
+from sklearn.decomposition import PCA
 
 
-# Shape features
-
-def get_major_axe(img):
-    return 0
-
-
-def get_minor_axe(img):
-    return 0
-
-
-def get_perimeter(img):
-    return 0
-
+# Centre, axes de symmétrie
 
 def get_area(img):
-    return 0
+    return len([pixel for row in img for pixel in row if pixel == 0])
 
 
-# Border irregularity index
-def get_BII(img):
-    a = get_major_axe(img)
-    b = get_minor_axe(img)
-    P = get_perimeter(img)
-    A = get_area(img)
-    return (a * b * P * P) / (2 * math.pi * (a * a + b * b) * A)
+def get_points(img):
+    return [(j, img.shape[0] - i - 1) for i, row in enumerate(img) for j, pixel in enumerate(row) if pixel != 0]
 
 
-def get_GLCM(img):
-    return greycomatrix(img, distances=[5], angles=[0], levels=256,
-                        symmetric=True, normed=True)
+def get_center(points):
+    length = points.shape[0]
+    sum_x = np.sum(points[:, 0])
+    sum_y = np.sum(points[:, 1])
+    return sum_x / length, sum_y / length
+
+
+def relative_side_of_point(p, d):
+    return (d[0][0] - p[0]) * (d[1][1] - p[1]) - (d[0][1] - p[1]) * (d[1][0] - p[0]) < 0
+
+
+def get_axes(points):
+    cX, cY = get_center(points)
+    pca = PCA(n_components=2).fit(points)
+    axes = []
+    for i, (comp, var) in enumerate(zip(pca.components_, pca.explained_variance_ratio_)):
+        comp = comp * var * 400
+        axes.append([[cX, cY], [cX + comp[0], cY + comp[1]]])
+    return np.asarray(axes)
+
+
+def make_quadrants(points, axe1, axe2):
+    quadrants = []
+    for p in points:
+        if relative_side_of_point(p, axe1):
+            if relative_side_of_point(p, axe2):
+                quadrants.append(0)
+            else:
+                quadrants.append(1)
+        else:
+            if relative_side_of_point(p, axe2):
+                quadrants.append(2)
+            else:
+                quadrants.append(3)
+    return np.asarray(quadrants)
 
 
 ######
+
+
+# Nos features
+
+# Renvoie la tranformation de Fourier rapide en 2 dimensions
+# Attention, l'image résultante contient des nombres complexes.
+# Pour éviter que cela pose soucis, ajouter np.abs(...)
+# Aussi, faire np.fft.fftshift(...) avant le abs pour plus de clarté
+# (Cela met la fréquence zéro au centre)
+def get_fourier_transform(img):
+    return scipy.fft.fft2(img)
+
+
+def color_symmetry(img):
+    pass
+
+
+# Feature innovante
+# Renvoie la différence entre l'image et sa copie miroir (des deux axes)
+def difference_image(img):
+    l = img.shape[0]
+    L = img.shape[1]
+    n_channels = img.shape[2]
+    diff = np.zeros((l, L, n_channels))
+    for i in range(l):
+        for j in range(L):
+            for c in range(n_channels):
+                diff[i][j][c] = np.abs(img[i][j][c] - img[l - i - 1][L - j - 1][c])
+
+    return diff
+
+
+########################## Inutilisé
+
+###########
 
 # Calcul optimal du centroid d'une liste de point
 def centeroidnp(arr):
@@ -76,34 +127,27 @@ def center_img(img):
     return centered_img
 
 
-######
+def get_major_axe(img):
+    return 0
 
 
-# Nos features
-
-# Renvoie la tranformation de Fourier rapide en 2 dimensions
-# Attention, l'image résultante contient des nombres complexes.
-# Pour éviter que cela pose soucis, ajouter np.abs(...)
-# Aussi, faire np.fft.fftshift(...) avant le abs pour plus de clarté
-# (Cela met la fréquence zéro au centre)
-def get_fourier_transform(img):
-    return scipy.fft.fft2(img)
+def get_minor_axe(img):
+    return 0
 
 
-def color_symmetry(img):
-    pass
+def get_perimeter(img):
+    return 0
 
 
-# Feature innovante
-# Renvoie la différence entre l'image et sa copie miroir (des deux axes)
-def difference_image(img):
-    l = img.shape[0]
-    L = img.shape[1]
-    n_channels = img.shape[2]
-    diff = np.zeros((l, L, n_channels))
-    for i in range(l):
-        for j in range(L):
-            for c in range(n_channels):
-                diff[i][j][c] = np.abs(img[i][j][c] - img[l - i - 1][L - j - 1][c])
+# Border irregularity index
+def get_BII(img):
+    a = get_major_axe(img)
+    b = get_minor_axe(img)
+    P = get_perimeter(img)
+    A = get_area(img)
+    return (a * b * P * P) / (2 * math.pi * (a * a + b * b) * A)
 
-    return diff
+
+def get_GLCM(img):
+    return greycomatrix(img, distances=[5], angles=[0], levels=256,
+                        symmetric=True, normed=True)
