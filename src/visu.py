@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from features import get_points, get_axes, make_quadrants
+import cv2
+import numpy as np
 
-quad_rgb = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+quad_rgb = np.asarray([(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)])
+
 
 # Affiche la courbe de l'accuracy
 def plot_and_save(hist):
@@ -30,12 +33,12 @@ def show_mask_quad(points, quadrants):
 
 # Renvoie une image.
 # Représente les points colorés des quadrants avec du noir autour
-def get_img_quadrant(mask, points, quad_rgb, quadrants):
-    img_points = np.zeros(mask.shape, dtype=np.uint8)
+def get_img_quadrant(mask, points, quadrants):
+    img_points = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.uint8)
     for num, point in enumerate(points):
         i = point[0]
         j = point[1]
-        img_points[mask.shape[0] - j][i] = np.asarray(quad_rgb[quadrants[num]])
+        img_points[mask.shape[0] - j][i] = quad_rgb[quadrants[num]]
     return img_points
 
 
@@ -44,7 +47,7 @@ def mask2rgb(mask):
 
 
 def quad_on_img(image, img_points, alpha):
-    res = np.zeros((image.shape), dtype=np.uint8)
+    res = np.zeros(image.shape, dtype=np.uint8)
     for i, row in enumerate(img_points):
         for j, pixel in enumerate(row):
             if pixel.any() == 0:
@@ -56,10 +59,10 @@ def quad_on_img(image, img_points, alpha):
 
 # image : l'image de la lésion en couleur
 # mask : le masque en noir et blanc de cette lésion
-def example_draw_quadrants_on_lesion(image, mask):
+def draw_quadrants_on_lesion(image, mask, name="Quadrants.jpg"):
     points = np.asarray(get_points(mask))
     axe1, axe2 = get_axes(points)
     quadrants = make_quadrants(points, axe1, axe2)
-    img_points = get_img_quadrant(mask, points, quad_rgb, quadrants)
+    img_points = get_img_quadrant(mask, points, quadrants)
     final_img = quad_on_img(image, img_points, 0.8)
-    cv2.imwrite('Quadrants.jpg', final_img)
+    cv2.imwrite('../out/'+name, final_img)
