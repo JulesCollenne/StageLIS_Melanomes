@@ -20,12 +20,6 @@ def get_data(path, target):
 
 
 def prepare_data(X_train, y_train, X_test, y_test):
-    size = (cfg.IMG_SIZE, cfg.IMG_SIZE)
-    for i, image in enumerate(X_train):
-        X_train[i] = tf.image.resize(image, size).numpy()
-
-    for i, image in enumerate(X_test):
-        X_test[i] = tf.image.resize(image, size).numpy()
     y_trainOH = tf.one_hot(y_train, cfg.NUM_CLASSES)
     y_testOH = tf.one_hot(y_test, cfg.NUM_CLASSES)
     X_train = np.asarray([X_train[i].astype('float32') for i in range(len(X_train))])
@@ -38,7 +32,6 @@ def get_dataset():
     y_train = []
     X_test = []
     y_test = []
-    i = 0
 
     print("Loading data...")
 
@@ -48,19 +41,20 @@ def get_dataset():
             print("Loading " + lesion_type + " data...")
             current_path = cfg.PATH + folder + "/" + lesion_type + "/"
             files = [f for f in listdir(current_path) if isfile(join(current_path, f))]
+            i = 0
             for img in files:
                 if folder == "TRAIN":
-                    X_train.append(plt.imread(current_path + img))
+                    image = plt.imread(current_path + img)
+                    X_train.append(tf.image.resize(image, (cfg.IMG_SIZE, cfg.IMG_SIZE)).numpy())
                     y_train.append(1 if lesion_type == "MEL" else 0)
                 else:
-                    X_test.append(plt.imread(current_path + img))
+                    image = plt.imread(current_path + img)
+                    X_test.append(tf.image.resize(image, (cfg.IMG_SIZE, cfg.IMG_SIZE)).numpy())
                     y_test.append(1 if lesion_type == "MEL" else 0)
                 i += 1
 
                 sys.stdout.write('\r')
-                sys.stdout.write(str(round(i / 6126. * 100, 2)) + "%")
-                if i > 200:
-                    break
+                sys.stdout.write(str(round(i / len(files)*100)) + "%")
             print("\nDone!")
     return prepare_data(X_train, y_train, X_test, y_test)
 
@@ -73,8 +67,9 @@ def get_testset():
         files = [f for f in listdir(current_path) if isfile(join(current_path, f))]
         for img in files:
             X_test.append(tf.image.resize(plt.imread(current_path + img), (cfg.IMG_SIZE, cfg.IMG_SIZE)).numpy())
+            # X_test.append(tf.image.resize(plt.imread(current_path + img), (cfg.IMG_SIZE, cfg.IMG_SIZE)))
             y_test.append(1 if lesion_type == "MEL" else 0)
-    return X_test, keras.utils.to_categorical(y_test, num_classes=cfg.NUM_CLASSES)
+    return np.asarray(X_test), keras.utils.to_categorical(y_test, num_classes=cfg.NUM_CLASSES)
 
 
 def mel_augmentation(X, y):

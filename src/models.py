@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.applications import EfficientNetB5
 from tensorflow.keras.layers.experimental import preprocessing
 from tensorflow.keras.models import Sequential
 import cfg
@@ -24,6 +25,7 @@ def build_model(num_classes):
 
     inputs = layers.Input(shape=(cfg.IMG_SIZE, cfg.IMG_SIZE, 3))
     x = img_augmentation(inputs)
+    #model = EfficientNetB7(include_top=False, input_tensor=x, weights="imagenet")
     model = EfficientNetB0(include_top=False, input_tensor=x, weights="imagenet")
 
     # Freeze the pretrained weights

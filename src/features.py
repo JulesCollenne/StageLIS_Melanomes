@@ -53,6 +53,24 @@ def make_quadrants(points, axe1, axe2):
     return np.asarray(quadrants)
 
 
+def get_full_quads(quads, points, img):
+    full_quads = np.ones((img.shape[0], img.shape[1])) * -1
+    for i, x, y in enumerate(points):
+        full_quads[x][y] = quads[i]
+    return full_quads
+
+
+def get_quad_mean_color(quads, points, img):
+    full_quads = get_full_quads(quads, points, img)
+    moyennes = []
+
+    for quad_num in (0, 1, 2, 3):
+        moyennes.append(
+            np.mean([img[i][j] for i in range(len(img)) for j in range(len(img[i])) if full_quads[i][j] == quad_num]))
+
+    return moyennes
+
+
 ######
 
 
@@ -73,17 +91,42 @@ def color_symmetry(img):
 
 # Feature innovante
 # Renvoie la différence entre l'image et sa copie miroir (des deux axes)
-def difference_image(img):
-    l = img.shape[0]
-    L = img.shape[1]
-    n_channels = img.shape[2]
-    diff = np.zeros((l, L, n_channels))
-    for i in range(l):
-        for j in range(L):
-            for c in range(n_channels):
-                diff[i][j][c] = np.abs(img[i][j][c] - img[l - i - 1][L - j - 1][c])
-
+# Axis=0 : Horizontal
+# Axis=1 : Vertical
+# Axis=2 : Les deux (diagonale)
+def get_diff(image, axis=2):
+    if axis not in (0, 1, 2):
+        print("Axis parameter is either 0, 1 or 2.")
+        print("Please use a correct value")
+        exit(1)
+    diff = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
+    if axis == 2:
+        for i in range(len(image)):
+            for j in range(len(image[i])):
+                for c in range(len(image[i][j])):
+                    diff[i][j][c] = np.abs(image[i][j][c] - image[image.shape[0] - i - 1][image.shape[1] - j - 1][c])
+    elif axis == 0:
+        for i in range(int(len(image) / 2)):
+            for j in range(len(image[i])):
+                for c in range(len(image[i][j])):
+                    diff[i][j][c] = np.abs(image[i][j][c] - image[image.shape[0] - i - 1][j][c])
+    elif axis == 1:
+        for i in range(len(image)):
+            for j in range(int(len(image[i]) / 2)):
+                for c in range(len(image[i][j])):
+                    diff[i][j][c] = np.abs(image[i][j][c] - image[i][image.shape[1] - j - 1][c])
     return diff
+
+
+def crop_lesion(mask, img):
+    points = cv2.findNonZero(mask)
+    x, y, w, h = cv2.boundingRect(points)
+    return img[y:y + h, x:x + w]
+
+
+def get_diff_img(mask, img, axis=2):
+    cropped = crop_lesion(mask, img)
+    return get_diff(cropped, axis)
 
 
 ########################## Inutilisé
