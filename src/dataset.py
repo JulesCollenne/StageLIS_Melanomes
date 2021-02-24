@@ -27,6 +27,21 @@ def prepare_data(X_train, y_train, X_test, y_test):
     return X_train, y_trainOH, X_test, y_testOH
 
 
+def get_set(folder):
+    X_test = []
+    y_test = []
+    imgNames = []
+    for lesion_type in ("NEV", "MEL"):
+        current_path = cfg.PATH + folder + '/' + lesion_type + "/"
+        files = [f for f in listdir(current_path) if isfile(join(current_path, f))]
+        for img in files:
+            X_test.append(tf.image.resize(plt.imread(current_path + img), (cfg.IMG_SIZE, cfg.IMG_SIZE)).numpy())
+            # X_test.append(tf.image.resize(plt.imread(current_path + img), (cfg.IMG_SIZE, cfg.IMG_SIZE)))
+            y_test.append(1 if lesion_type == "MEL" else 0)
+            imgNames.append(lesion_type + '/'+ img)
+    return np.asarray(X_test), keras.utils.to_categorical(y_test, num_classes=cfg.NUM_CLASSES), imgNames
+
+
 def get_dataset():
     X_train = []
     y_train = []
@@ -54,7 +69,7 @@ def get_dataset():
                 i += 1
 
                 sys.stdout.write('\r')
-                sys.stdout.write(str(round(i / len(files)*100)) + "%")
+                sys.stdout.write(str(round(i / len(files) * 100)) + "%")
             print("\nDone!")
     return prepare_data(X_train, y_train, X_test, y_test)
 
@@ -62,6 +77,7 @@ def get_dataset():
 def get_testset():
     X_test = []
     y_test = []
+    testImgNames = []
     for lesion_type in ("NEV", "MEL"):
         current_path = cfg.PATH + 'TEST/' + lesion_type + "/"
         files = [f for f in listdir(current_path) if isfile(join(current_path, f))]
@@ -69,6 +85,7 @@ def get_testset():
             X_test.append(tf.image.resize(plt.imread(current_path + img), (cfg.IMG_SIZE, cfg.IMG_SIZE)).numpy())
             # X_test.append(tf.image.resize(plt.imread(current_path + img), (cfg.IMG_SIZE, cfg.IMG_SIZE)))
             y_test.append(1 if lesion_type == "MEL" else 0)
+            testImgNames.append(lesion_type + img)
     return np.asarray(X_test), keras.utils.to_categorical(y_test, num_classes=cfg.NUM_CLASSES)
 
 
@@ -103,6 +120,10 @@ def get_dict_dataset(path):
                 labels[current_path + f] = 0 if lesion_type == 'NEV' else 1
     return partition, labels
 
+
+# EDIT : Il y a déjà une fonction keras qui fait ça ;-;
+# image_dataset_from_directory(main_directory, labels='inferred')
+# Autant l'utiliser TODO
 
 class DataGenerator(keras.utils.Sequence):
 

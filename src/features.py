@@ -194,3 +194,14 @@ def get_BII(img):
 def get_GLCM(img):
     return greycomatrix(img, distances=[5], angles=[0], levels=256,
                         symmetric=True, normed=True)
+
+
+# Feature extractor algorithms
+
+def get_sift_features(img):
+    sift = cv2.SIFT()
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    kp = sift.detect(gray, None)
+    img = cv2.drawKeypoints(gray, kp)
+    # cv2.imwrite('sift_keypoints.jpg',img)
+    return kp

@@ -66,3 +66,21 @@ def draw_quadrants_on_lesion(image, mask, name="Quadrants.jpg"):
     img_points = get_img_quadrant(mask, points, quadrants)
     final_img = quad_on_img(image, img_points, 0.8)
     cv2.imwrite('../out/'+name, final_img)
+
+
+def writePredictions(y_pred, y_test, testImgNames):
+    text_file = open("results.txt", "w")
+    fn_ind = [i for i in range(len(y_pred)) if np.argmax(y_pred[i]) == 0 and np.argmax(y_test[i]) == 1]
+    fp_ind = [i for i in range(len(y_pred)) if np.argmax(y_pred[i]) == 1 and np.argmax(y_test[i]) == 0]
+    text_file.write("False negative : ")
+    text_file.write("\n")
+    for i in fn_ind:
+        text_file.write(testImgNames[i])
+        text_file.write("\n")
+    text_file.write("\n")
+    text_file.write("False positive : ")
+    text_file.write("\n")
+    for i in fp_ind:
+        text_file.write(testImgNames[i])
+        text_file.write("\n")
+    text_file.close()
