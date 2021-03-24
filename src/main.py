@@ -6,7 +6,6 @@ from models import build_model
 from visu import plot_and_save
 from dataset import get_testset
 from visu import save_CM
-from visu import writePredictions
 
 training_generator, test_generator = get_generators(cfg.PATH)
 

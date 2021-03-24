@@ -1,7 +1,6 @@
 import keras
 from keras.layers import Concatenate, Dense, Input
 from keras.models import Model
-from models import build_final_nn
 import cfg
 
 in1 = Input(shape=(cfg.IMG_SIZE, cfg.IMG_SIZE, 3))
