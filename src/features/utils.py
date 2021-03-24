@@ -168,6 +168,7 @@ def get_area_diff(mask):
             somme += int(mask[i][j] != mask[mask.shape[0] - i - 1][j])
     return somme
 
+
 def get_cropped(img, mask, points, axe1, axe2):
     center = get_center(points)
     vector = (axe1[1][0] - axe1[0][0], axe1[1][1] - axe1[0][1])
@@ -178,5 +179,6 @@ def get_cropped(img, mask, points, axe1, axe2):
     cropped = crop_lesion(mask_rotated, img_rotated)
     cropped = cv2.resize(cropped, img_shape)
     return cropped
+
 
 quad_rgb = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
