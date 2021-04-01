@@ -9,7 +9,6 @@ from skimage.segmentation import slic
 
 # Renvoie la valeur absolue des différences entre les éléments de la liste,
 # supposés de même longueur.
-from color_mean import *
 from dark_centroids import *
 from superpixel import get_radius_list, toLongLines, get_line_list
 from utils import *
@@ -57,13 +56,6 @@ def f_superpixel_diff(images, num_segments=50):
     # return feature_diff(unique_colors)
     diff = np.abs(unique_colors[0] - unique_colors[3], unique_colors[1] - unique_colors[2])
     return list(diff.flatten())
-
-
-# Renvoie la moyenne de couleur par quadrant
-# Prend une image et ses quadrants en entrée
-def f_color_mean(img, full_quads):
-    moyennes = get_mean_colors(full_quads, img)
-    return feature_diff(moyennes)
 
 
 def f_entropy(img):
@@ -120,7 +112,7 @@ def f_distareas(image, full_quads, points):
     d2 = []
     centroids = []
     for n_quad in range(4):
-        centroids.append(get_hue_centroids(n_quad, full_quads, thresh))
+        centroids.append(get_lum_centroids(n_quad, full_quads, thresh))
 
     for quad in centroids:
         d1.append(np.linalg.norm(quad[0] - (cX, cY)))
@@ -144,7 +136,7 @@ def f_lum_angles(image, full_quads, points):
     center = get_center(points)
     centroids = []
     for n_quad in range(4):
-        centroids.append(get_hue_centroids(n_quad, full_quads, thresh))
+        centroids.append(get_lum_centroids(n_quad, full_quads, thresh))
 
     angles = []
 
@@ -238,7 +230,7 @@ def get_features(img, mask):
     quadrants = make_quadrants(points, axe1, axe2)
     full_quads = get_full_quads(quadrants, points, img)
     cropped = get_cropped(img, mask, points, axe1, axe2)
-    features += f_color_mean(img, full_quads)
+    #features += f_color_mean(img, full_quads)
     features += f_histo(img, full_quads)
     features += f_distareas(img, full_quads, points)
     features += list(f_entropy(cropped))

@@ -1,10 +1,10 @@
 import numpy as np
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import MinMaxScaler
 
 
 class DataLoader():
     def __init__(self, featuresNames, featuresPath='/content/drive/MyDrive/Stage_LIS/Features/',
-                 scaler=RobustScaler):
+                 scaler=MinMaxScaler):
         self.names = featuresNames
         self.path = featuresPath
         self.scaler = scaler
