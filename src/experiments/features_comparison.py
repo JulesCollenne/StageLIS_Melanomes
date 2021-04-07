@@ -1,7 +1,7 @@
 from sklearn.svm import LinearSVC
 
 from DataLoader import DataLoader
-from metrics.utils import visu_results
+from metrics.metrics_utils import visu_results
 
 featuresNames = ('beta')
 loader = DataLoader(featuresNames)

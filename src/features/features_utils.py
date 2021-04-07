@@ -1,7 +1,11 @@
+import math
+
+import bcolors as bcolors
 import cv2
 import numpy as np
 from numpy import cos, sin
 from sklearn.decomposition import PCA
+import cfg
 
 
 # In : Grayscale image
@@ -27,22 +31,17 @@ def get_center(points):
 
 # In : Grayscale image (mask of the lesion)
 # Out : Angle of rotation minimizing the area difference between the two halves of image
-def get_axis_area(mask):
-    points = np.asarray(get_points(mask))
-    center = get_center(points)
-    rows, cols = mask.shape
-    M = np.float32([[1, 0, mask.shape[1] / 2 - center[0]], [0, 1, mask.shape[0] / 2 - center[1]]])
-    mask = cv2.warpAffine(mask, M, (cols, rows))
-    cY = int(center[0])
-    cX = int(center[1])
-
+def get_axis_area(mask, center):
     aires = {}
-    for angle in range(0, 360, 10):
+    cX, cY = center
+    for angle in range(0, 180, 10):
         res = rotate_img(mask, -angle, (cX, cY))
         taille = int(res.shape[0] / 2)
         aires[angle] = (res[:taille][:] != res[taille:][:]).sum()
 
-    return np.argmin([aires[i] for i in aires.keys()]) * 10
+    areas = np.argmin([aires[i] for i in aires.keys()])
+    best_angle = areas * 10
+    return best_angle
 
 
 # In : Point p, line d
@@ -56,7 +55,7 @@ def relative_side_of_point(p, d):
 # method possible values : PCA, Minim
 # PCA : Compute axes using PCA
 # Minim : Compute axes using area difference minimization
-def get_axes(points, method='PCA'):
+def get_axes(points, method='PCA', mask=None):
     cX, cY = get_center(points)
     if method == 'PCA':
         pca = PCA(n_components=2).fit(points)
@@ -64,8 +63,11 @@ def get_axes(points, method='PCA'):
         for i, (comp, var) in enumerate(zip(pca.components_, pca.explained_variance_ratio_)):
             comp = comp * var * 400
             axes.append([[cX, cY], [cX + comp[0], cY + comp[1]]])
-        return axes
+        return np.asarray(axes)
     elif method == 'Minim':
+        if mask is None:
+            print(
+                bcolors.FAIL + 'Mask is None using Minim method !\nUse PCA if you dont want to use mask' + bcolors.ENDC)
         best_angle = get_axis_area(mask)
 
         enX = int(400 * cos(-best_angle))
@@ -73,7 +75,7 @@ def get_axes(points, method='PCA'):
 
         axe1 = ((cX - enX, cY - enY), (cX + enX, cY + enY))
         axe2 = ((cX + enY, cY - enX), (cX - enY, cY + enX))
-        return axe1, axe2
+        return np.asarray(axe1), np.asarray(axe2)
     return None
 
 
@@ -106,9 +108,9 @@ def quad_on_img(img, quadrants, alpha):
     img_points = np.zeros(img.shape, dtype=np.uint8)
     for i, row in enumerate(img):
         for j, pixel in enumerate(row):
-            img_points[i][j] = np.asarray(quad_rgb[quadrants[i][j]])
+            img_points[i][j] = np.asarray(cfg.quad_rgb[quadrants[i][j]])
 
-    res = np.zeros((img.shape), dtype=np.uint8)
+    res = np.zeros(img.shape, dtype=np.uint8)
     for i, row in enumerate(img_points):
         for j, pixel in enumerate(row):
             if pixel.any() == -1:
@@ -118,6 +120,14 @@ def quad_on_img(img, quadrants, alpha):
     return res
 
 
+# In : 2 points (x,y)
+# Out : Euclidian distance between the two points
+def distance(p1, p2):
+    return np.sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2))
+
+
+# In : Image, angle in degree, scale
+# Out : Rotated image
 def rotate_img(image, angle, center, scale=1.):
     (h, w) = image.shape[:2]
     M = cv2.getRotationMatrix2D(center, angle, scale)
@@ -125,5 +135,26 @@ def rotate_img(image, angle, center, scale=1.):
     return rotated
 
 
-def distance(p1, p2):
-    return np.sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2))
+def get_angle(vector_1, vector_2):
+    unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+    unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+    dot_product = np.dot(unit_vector_1, unit_vector_2)
+    return math.degrees(np.arccos(dot_product))
+
+
+def crop_lesion(mask, img):
+    points = cv2.findNonZero(mask)
+    x, y, w, h = cv2.boundingRect(points)
+    return img[y:y + h, x:x + w]
+
+
+def get_cropped(img, mask, points, axe1, axe2):
+    center = get_center(points)
+    vector = (axe1[1][0] - axe1[0][0], axe1[1][1] - axe1[0][1])
+    # vector2 = (axe2[1][0] - axe2[0][0], axe2[1][1] - axe2[0][1])
+    angle = get_angle(np.asarray((1, 0)), np.asarray(vector))
+    img_rotated = rotate_img(img, -angle, center)
+    mask_rotated = rotate_img(mask, -angle, center)
+    cropped = crop_lesion(mask_rotated, img_rotated)
+    cropped = cv2.resize(cropped, cfg.img_shape)
+    return cropped

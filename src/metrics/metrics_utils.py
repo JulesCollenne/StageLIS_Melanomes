@@ -6,6 +6,9 @@ from sklearn.metrics import auc
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.model_selection import GridSearchCV, cross_val_score
+
+from DataLoader import DataLoader
 
 
 def visu_results(y_test, predictions, normalize=None, confidence=None):
@@ -42,3 +45,27 @@ def visu_results(y_test, predictions, normalize=None, confidence=None):
     plt.xlim([0, 1])
     plt.ylim([0, 1])
     plt.show()
+
+
+def run_and_test(featuresNames, parameters, clf, scoring='roc_auc', hasConfidence=False):
+    print('Loading features...')
+    loader = DataLoader(featuresNames)
+    X_train, y_train, X_test, y_test = loader.load()
+    print('GridSeach...')
+    gs = GridSearchCV(clf, parameters, scoring=scoring, n_jobs=-1, verbose=10).fit(X_train, y_train)
+
+    print(gs.best_score_)
+    print(gs.best_estimator_)
+    clf = gs.best_estimator_
+
+    print('Best estimator...')
+    clf.fit(X_train, y_train)
+
+    predictions = clf.predict(X_test)
+    if hasConfidence:
+        confidence = clf.decision_function(X_test)
+        visu_results(y_test, predictions, confidence=confidence)
+    else:
+        visu_results(y_test, predictions)
+
+    print('Cross_val_score (auc):', np.mean(cross_val_score(clf, X_train, y_train, scoring=scoring)))

@@ -9,33 +9,49 @@ from skimage.segmentation import slic
 
 # Renvoie la valeur absolue des différences entre les éléments de la liste,
 # supposés de même longueur.
-from dark_centroids import *
+from distareas import *
 from superpixel import get_radius_list, toLongLines, get_line_list
-from utils import *
+from features_utils import *
 
 
+# In : Any feature by quadrant (list of list with shape (4,x))
+# Out : Mean differences for each quadrant relative to the axes, and center
+# Output shape : (3*x)
 def feature_diff(feature):
     result = []
-    for i in range(len(feature) - 1):
-        for j in range(i + 1, len(feature)):
-            # Erreur ici : Pas même taille. Les images doivent avoir un nombre de pixel en largeur pair
-            result += list(np.abs(feature[i] - feature[j]))
+    feature = np.asarray(feature)
 
-    # En 2
-    result += list(np.abs((feature[0] + feature[1]) / 2 - (feature[2] + feature[3]) / 2))
-    result += list(np.abs((feature[0] + feature[2]) / 2 - (feature[2] + feature[1]) / 2))
+    somme = (np.abs(feature[0] - feature[3]) + np.abs(feature[1] - feature[2])) / 2
+    result += list(somme)
+
+    somme = (np.abs(feature[0] - feature[1]) + np.abs(feature[2] - feature[3]) + np.abs(
+        feature[0] - feature[2]) + np.abs(feature[1] - feature[3])) / 4
+    result += list(somme)
+
+    # Moyenne des différences par rapport aux axes
+    H = np.abs((feature[0] + feature[1]) / 2 - (feature[2] + feature[3]) / 2)
+    V = np.abs((feature[0] + feature[2]) / 2 - (feature[2] + feature[1]) / 2)
+    result += list((H + V) / 2)
     return result
 
 
+# In : Any feature by quadrant except the feature is a scalar
+# Out : Mean differences for each quadrant relative to the axes, and center
 def scalar_feature_diff(feature):
     result = []
-    for i in range(len(feature) - 1):
-        for j in range(i + 1, len(feature)):
-            result += np.abs(feature[i] - feature[j])
+    feature = np.asarray(feature)
 
-    # En 2
-    result += np.abs((feature[0] + feature[1]) / 2 - (feature[2] + feature[3]) / 2)
-    result += np.abs((feature[0] + feature[2]) / 2 - (feature[2] + feature[1]) / 2)
+    somme = (np.abs(feature[0] - feature[3]) + np.abs(feature[1] - feature[2])) / 2
+    result.append(somme)
+
+    somme = (np.abs(feature[0] - feature[1]) + np.abs(feature[2] - feature[3]) + np.abs(
+        feature[0] - feature[2]) + np.abs(feature[1] - feature[3])) / 4
+    result.append(somme)
+
+    # Moyenne des différences par rapport aux axes
+    H = np.abs((feature[0] + feature[1]) / 2 - (feature[2] + feature[3]) / 2)
+    V = np.abs((feature[0] + feature[2]) / 2 - (feature[2] + feature[1]) / 2)
+    result.append((H + V) / 2)
     return result
 
 
@@ -66,30 +82,6 @@ def f_entropy(img):
     return feature
 
 
-# Renvoie les histogrammes pour chaque quadrants
-def get_histos(img, full_quads, n_bins=256):
-    diviseur = 256 / n_bins
-    histo = np.zeros((4, 3, n_bins))
-    for i in range(full_quads.shape[0]):
-        for j in range(full_quads.shape[1]):
-            quad_num = int(full_quads[i][j])
-            if quad_num != -1:
-                for channel in range(3):
-                    histo[quad_num][channel][int(img[i][j][channel] / diviseur)] += 1
-    return histo
-
-
-# Feature permettant de calculer les différences entre les histogrammes de couleurs
-# Prend en entrée l'image, les quadrants de l'image, ainsi que le nombre de bins
-# Par défaut, le nombre de bin est de 10
-# Les histogrammes sont sur les canaux RGB puis flatten.
-# On a une liste de 4 histogrammes, sur lesquels on compare les valeurs entre chaque quadrants
-def f_histo(img, full_quads, n_bins=10):
-    histos = get_histos(img, full_quads, n_bins=n_bins)
-    histos = histos.reshape((4, -1))
-    return feature_diff(histos)
-
-
 def get_areas(thresh, full_quads):
     somme = np.zeros((4, 2))
     for i in range(thresh.shape[0]):
@@ -99,31 +91,6 @@ def get_areas(thresh, full_quads):
                     somme[int(full_quads[i][j])][0] += 1
                 somme[int(full_quads[i][j])][1] += 1
     return somme
-
-
-# d1 : total d2 : sombre
-# aire0 : sombre aire1 : total
-def f_distareas(image, full_quads, points):
-    ret, thresh = cv2.threshold(image, 85, 255, cv2.THRESH_BINARY)
-    center = get_center(points)
-    cX = center[0]
-    cY = center[1]
-    d1 = []
-    d2 = []
-    centroids = []
-    for n_quad in range(4):
-        centroids.append(get_lum_centroids(n_quad, full_quads, thresh))
-
-    for quad in centroids:
-        d1.append(np.linalg.norm(quad[0] - (cX, cY)))
-        d2.append(np.linalg.norm(quad[1] - (cX, cY)))
-
-    areas = get_areas(thresh, full_quads)
-
-    feature = [(areas[i][0] * d2[i]) / (areas[i][1] * d1[i]) for i in range(4)]
-    # for i in range(4):
-    # feature += (areas[i][0] * d2[i]) / (areas[i][1] * d1[i])
-    return feature_diff(feature)
 
 
 def distance(p1, p2):

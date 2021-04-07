@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from features import feature_diff
-from utils import get_points, get_axes, make_quadrants
+from features_utils import feature_diff
+from features_utils import get_points, get_axes, make_quadrants
 
 
 # In : Quadrants, image
