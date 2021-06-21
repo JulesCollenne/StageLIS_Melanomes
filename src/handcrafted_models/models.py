@@ -34,8 +34,9 @@ def get_HCANN():
     return model
 
 
-X_trainANN, y_trainANN, X_testANN, y_testANN = get_features()
-hcann = get_HCANN()
-hcann.load_weights(cfg.WEIGHTS_PATH+"hcann.h5")
-y_predANN = hcann.predict(X_testANN)
-visu_results(y_testANN, y_predANN, confidence=y_predANN)
+if __name__ == "__main__":
+    X_trainANN, y_trainANN, X_testANN, y_testANN = get_features()
+    hcann = get_HCANN()
+    hcann.load_weights(cfg.WEIGHTS_PATH+"hcann.h5")
+    y_predANN = hcann.predict(X_testANN)
+    visu_results(y_testANN, y_predANN, confidence=y_predANN)

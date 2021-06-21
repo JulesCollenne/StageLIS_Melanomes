@@ -3,6 +3,11 @@ from tensorflow.keras import layers
 from tensorflow.keras.applications.efficientnet import *
 from tensorflow.keras.layers.experimental import preprocessing
 from tensorflow.keras.models import Sequential
+import numpy as np
+
+import cfg
+from dataset import get_datasets
+from metrics_utils import visu_results
 
 img_augmentation = Sequential(
     [
@@ -80,3 +85,25 @@ def get_efficientnet(model_name, data_aug=True, weights="imagenet"):
         optimizer='adam', loss="binary_crossentropy", metrics='AUC'
     )
     return model
+
+
+def CNN_predict(model, dataset):
+    y_true = []
+    y_pred = []
+    for X, y in dataset:
+        y_true += y.numpy().tolist()
+        y_pred += model(X).numpy().tolist()
+    return y_true, y_pred
+
+
+if __name__ == "__main__":
+    print("Getting dataset...")
+    train_ds, val_ds, test_ds = get_datasets()
+    sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+    print("Loading model...")
+    b2 = get_efficientnet('b2')
+    b2.load_weights(cfg.WEIGHTS_PATH + 'b2_fine.h5')
+    print("Predictions...")
+    y_testCNN, y_predCNN = CNN_predict(b2, test_ds)
+    print("Done!")
+    visu_results(y_testCNN, np.asarray(y_predCNN), confidence=np.asarray(y_predCNN))
