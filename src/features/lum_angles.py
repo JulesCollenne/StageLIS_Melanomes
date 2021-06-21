@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 
 from distareas import get_lum_centroids
-from features import scalar_feature_diff
-from features_utils import get_center
+
+from feature_difference import scalar_feature_diff
+from geometry import get_center
 
 
 # Angles entre les centroids de teintes sombre

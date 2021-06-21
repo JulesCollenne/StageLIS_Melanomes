@@ -1,3 +1,6 @@
+import numpy as np
+
+from features_utils import crop_lesion
 
 
 # Axis=0 : Horizontal

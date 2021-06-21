@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from features_utils import feature_diff
+from feature_difference import feature_diff
 from features_utils import get_points, get_axes, make_quadrants
 
 

@@ -6,9 +6,38 @@ import skimage
 from numpy import cos, sin, sqrt
 from shapely.geometry import LineString, Point
 import cv2
+from skimage import color
 from skimage.segmentation import slic
 
-from features_utils import get_points, get_center, get_axes, make_quadrants
+from feature_difference import feature_diff
+from geometry import get_points, get_center, get_axes, make_quadrants
+
+
+# Compare les superpixels rencontrés sur les cercles autour de la lésion
+def f_superpixel_circles(img, center, full_quads, numSegments=50, n_circles=4):
+    segments = slic(img, n_segments=numSegments, sigma=5)
+    img2 = color.label2rgb(segments, img, kind='avg', bg_label=-1)
+    feature = []
+    cX, cY = center
+    radius = get_radius_list((cY, cX), full_quads, n_circles)
+    for rad in radius:
+        somme = np.zeros((4, 3))
+        nb_pixels = np.zeros(4)
+        for i, row in enumerate(img2):
+            for j, pixel in enumerate(row):
+                if int(distance((i, j), (cX, cY))) == int(rad):
+                    quad_num = int(full_quads[j][i])
+                    somme[quad_num] += pixel
+                    nb_pixels[quad_num] += 1
+                    # plt.scatter(i,j, c=quadcolor[quad_num])
+
+        if 0 in nb_pixels:
+            print('Warning : missing pixel values')
+        somme = [somme[i] / nb_pixels[i] if 0 != nb_pixels[i]
+                 else np.mean(img2, axis=(0, 1), dtype=int)
+                 for i in range(somme.shape[0])]
+        feature += feature_diff(somme)
+    return feature
 
 
 # Renvoie la liste de rayons
@@ -151,4 +180,4 @@ if __name__ == "__main__":
     img2 = np.uint8(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
     plt.imshow(img2)
     outpath = '../../out/'
-    plt.savefig(outpath+'test.jpg')
+    plt.savefig(outpath + 'test.jpg')

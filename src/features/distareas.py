@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from features import get_areas, scalar_feature_diff
-from features_utils import get_center
+from features import get_areas
+from geometry import get_center
 
 
 def get_lum_centroids(num_quad, full_quads, thresh):
@@ -30,7 +30,6 @@ def get_lum_centroids(num_quad, full_quads, thresh):
 # aire0 : sombre aire1 : total
 def f_distareas(image, full_quads, points):
     ret, thresh = cv2.threshold(image, 85, 255, cv2.THRESH_BINARY)
-    feature = []
     center = get_center(points)
     cX = center[0]
     cY = center[1]

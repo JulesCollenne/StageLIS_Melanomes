@@ -3,6 +3,11 @@ from skimage import color
 from skimage.segmentation import slic
 
 
+# In : Une image de lésion découpée en 4 sous images
+# 1. Convertit les images en superpixels avec l'algo SLIC
+# 2. Récupère les superpixels de chaque image
+# 3. Ordonne les superpixels par luminosité
+# 4. Compare un à un les superpixels par quadrants
 def f_superpixel_diff(images, numSegments=50):
     superpixelise = []
     for image in images:
