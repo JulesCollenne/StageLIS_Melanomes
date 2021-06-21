@@ -5,6 +5,8 @@ n_cpu = multiprocessing.cpu_count()
 # PATH = "/home/adrien/ISIC_2019/NON_SEGMENTEES/"
 PATH = "/home/adrien/Subset_ISIC_2019/"
 GLOBAL_PATH = "/home/adrien/ISIC_2019/"
+FEATURES_PATH = "/home/adrien/Melanome/Features/"
+WEIGHTS_PATH = "/home/adrien/Melanome/Weights/"
 
 IMG_SIZE = 600
 batch_size = 32

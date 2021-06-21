@@ -1,15 +1,18 @@
 import numpy as np
+import sklearn
 from sklearn.preprocessing import MinMaxScaler
 
+import cfg
 
-class DataLoader():
-    def __init__(self, featuresNames, featuresPath='/content/drive/MyDrive/Stage_LIS/Features/',
-                 scaler=MinMaxScaler):
+
+class DataLoader:
+    def __init__(self, featuresNames, featuresPath=cfg.FEATURES_PATH,
+                 scaler=sklearn.preprocessing.MinMaxScaler):
         self.names = featuresNames
         self.path = featuresPath
         self.scaler = scaler
 
-    def load(self, normalize=True):
+    def load(self, normalize=True, centering=False):
         featuresPath = self.path
         featuresNames = self.names
         scaler = self.scaler()
@@ -17,7 +20,7 @@ class DataLoader():
         X_testL = []
         y_train = np.loadtxt(featuresPath + 'y_train.txt')
         y_test = np.loadtxt(featuresPath + 'y_test.txt')
-        if type(featuresNames) == tuple:
+        if type(featuresNames) != str:
             for feature in featuresNames:
                 xtrain = np.loadtxt(featuresPath + 'X_train_' + feature + '.txt')
                 xtest = np.loadtxt(featuresPath + 'X_test_' + feature + '.txt')
@@ -25,6 +28,9 @@ class DataLoader():
                     scaler.fit(xtrain)
                     xtrain = scaler.transform(xtrain)
                     xtest = scaler.transform(xtest)
+                if centering:
+                    xtrain -= 0.5
+                    xtest -= 0.5
                 X_trainL.append(xtrain)
                 X_testL.append(xtest)
             X_train = np.concatenate([elt for elt in X_trainL], axis=1)
