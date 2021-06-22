@@ -9,8 +9,6 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.model_selection import GridSearchCV, cross_val_score
 
-from DataLoader import DataLoader
-
 
 def visu_results(y_test, predictions, normalize=None, confidence=None):
     y_test = np.asarray(y_test)
@@ -79,12 +77,3 @@ def run_and_test(featuresNames, parameters, clf, scoring='roc_auc', hasConfidenc
         visu_results(y_test, predictions)
 
     print('Cross_val_score (auc):', np.mean(cross_val_score(clf, X_train, y_train, scoring=scoring)))
-
-
-def CNN_predict(model, dataset):
-    y_true = []
-    y_pred = []
-    for X, y in dataset:
-        y_true += y.numpy().tolist()
-        y_pred += model(X).numpy().tolist()
-    return y_true, y_pred
