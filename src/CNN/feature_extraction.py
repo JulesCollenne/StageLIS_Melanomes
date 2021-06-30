@@ -1,3 +1,4 @@
+import cfg
 from os import listdir
 from os.path import isfile, join
 import numpy as np
@@ -5,7 +6,6 @@ import matplotlib.pyplot as plt
 
 from tensorflow.keras import Model
 
-import cfg
 from CNN.models import get_efficientnet
 from handcrafted_models.models import get_HCANN
 

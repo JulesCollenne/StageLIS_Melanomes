@@ -3,8 +3,8 @@ from tensorflow.python.keras.layers import *
 from tensorflow.python.keras.models import *
 
 import cfg
-from DataLoader import DataLoader
-from metrics_utils import visu_results
+from loading.DataLoader import DataLoader
+from metrics.metrics_utils import visu_results
 
 
 def get_features():
