@@ -1,4 +1,7 @@
 import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.layers import *
+from tensorflow.keras import layers
 
 import cfg
 from CNN.models import get_efficientnet, CNN_predict

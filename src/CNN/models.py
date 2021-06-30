@@ -7,7 +7,7 @@ import numpy as np
 
 import cfg
 from dataset import get_datasets
-from metrics_utils import visu_results
+from metrics.metrics_utils import visu_results
 
 img_augmentation = Sequential(
     [

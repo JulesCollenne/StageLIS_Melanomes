@@ -1,8 +1,8 @@
 import numpy as np
 
 from beta import f_beta_quad
+from features.computation import load_all_data
 from geometry import get_points, get_center, get_axes, make_quadrants
-from load_features import load_all_data
 
 '''
     Code permettant la sauvegarde des features sous format txt.
